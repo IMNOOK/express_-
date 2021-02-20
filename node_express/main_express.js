@@ -6,8 +6,10 @@ var compression = require('compression')
 var indexRouter = require('./routes/index');
 var topicRouter = require('./routes/topic');
 var helmet = require('helmet')
+const cookieParser = require('cookie-parser');
 
 app.use(helmet());
+app.use(cookieParser());
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(compression());

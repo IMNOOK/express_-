@@ -4,7 +4,27 @@ var path = require('path');
 var fs = require('fs');
 var sanitizeHtml = require('sanitize-html');
 var template = require('../lib/template.js');
- 
+var cookie = require('cookie');
+
+function authIsOwner(request, response) {
+  var isOwner = false;
+  var cookies = {}
+  if(request.cookies.email && request.cookies.password){
+    isOwner = true;
+  }
+  return isOwner;
+}
+
+function authStatusUI(request, response) {
+  var authStatusUI = `<a href="/topic/login">login</a>`
+  if(authIsOwner(request, response)){
+    authStatusUI =  `<form action="/topic/logout_process" method="post">
+          <input type="submit" value="logout">
+      </form>`
+  }
+  return authStatusUI;
+}
+
 router.get('/create', function(request, response){
     var title = 'WEB - create';
     var list = template.list(request.list);
@@ -18,17 +38,22 @@ router.get('/create', function(request, response){
           <input type="submit">
         </p>
       </form>
-    `, '');
+    `, '',authStatusUI(request, response));
     response.send(html);
   });
    
   router.post('/create_process', function(request, response){
-    var post = request.body;
-    var title = post.title;
-    var description = post.description;
-    fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-      response.redirect(`/topic/${title}`);
-    });
+    console.log('Cookies: ', request.cookies)
+    if(request.cookies){
+      var post = request.body;
+      var title = post.title;
+      var description = post.description;
+      fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+        response.redirect(`/topic/${title}`);
+      });
+    }else{
+      response.send('Please login')
+    }
   });
    
   router.get('/update/:pageId', function(request, response){
@@ -49,7 +74,7 @@ router.get('/create', function(request, response){
           </p>
         </form>
         `,
-        `<a href="/topic/create">create</a> <a href="/topic/update/${title}">update</a>`
+        `<a href="/topic/create">create</a> <a href="/topic/update/${title}">update</a>`,authStatusUI(request, response)
       );
       response.send(html);
     });
@@ -75,8 +100,50 @@ router.get('/create', function(request, response){
       response.redirect('/');
     });
   });
+
+  router.get('/login', function (request,response) {
+  var title = 'login';
+  var list = template.list(request.list);
+  var html = template.HTML(title, list,
+  `
+  <form action="/topic/login_process" method="post">
+      <p><input type="text" name="email" placehold="email"></p>
+      <p><input type="password" name="password" placehold="password"></p>
+      <p><input type="submit"></p>
+  </form>
+  `,
+  `<a href="/topic/create">create</a>`,
+  );
+
+  response.send(html)
+});
+
+router.post('/logout_process', function (request,response) {
+  console.log(request.cookies.email);
+  response.clearCookie('email');
+  response.clearCookie('password');
+  response.redirect('/');
+});
+
+router.post('/login_process', function (request,response) {
+  var post = request.body;
+  
+  if(post.email === 'leeminwok@naver.com' && post.password === 'dhksthxpa12'){
+      response.cookie('email', post.email, {
+        maxAge: 60*60*1000,
+        HttpOnly: true
+      });
+      response.cookie('password', post.password, {
+        maxAge: 60*60*1000,
+        HttpOnly: true
+      });
+      response.redirect('/');
+  }else{
+      response.send('Who')
+  }
+});
    
-  router.get('/:pageId', function(request, response, next) { 
+  router.get('/data/:pageId', function(request, response, next) { 
     var filteredId = path.parse(request.params.pageId).base;
     fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
       if(err){
@@ -95,10 +162,11 @@ router.get('/create', function(request, response){
             <form action="/topic/delete_process" method="post">
               <input type="hidden" name="id" value="${sanitizedTitle}">
               <input type="submit" value="delete">
-            </form>`
+            </form>`,authStatusUI(request, response)
         );
         response.send(html);
       }
     });
   });
+  
   module.exports = router;

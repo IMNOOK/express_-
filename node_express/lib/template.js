@@ -1,5 +1,5 @@
 module.exports = {
-  HTML:function(title, list, body, control){
+  HTML:function(title, list, body, control,authStatusUI = `<a href="/topic/login">login</a>` ){
     return `
     <!doctype html>
     <html>
@@ -9,6 +9,7 @@ module.exports = {
     </head>
     <body>
       <h1><a href="/">WEB</a></h1>
+      ${authStatusUI}
       ${list}
       ${control}
       ${body}
@@ -19,7 +20,7 @@ module.exports = {
     var list = '<ul>';
     var i = 0;
     while(i < filelist.length){
-      list = list + `<li><a href="/topic/${filelist[i]}">${filelist[i]}</a></li>`;
+      list = list + `<li><a href="/topic/data/${filelist[i]}">${filelist[i]}</a></li>`;
       i = i + 1;
     }
     list = list+'</ul>';
