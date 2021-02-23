@@ -17,28 +17,30 @@ var auth = require('../lib/auth.js');
         `
         <form action="/auth/login_process" method="post">
             <p><input type="text" name="email" value="${request.cookies.email}"></p>
-            <p><input type="password" name="password" placeholder="password"></p>
+            <p><input type="password" name="pwd" placeholder="password"></p>
             <p><label><input type="checkbox" name="email_cookie" value="true" checked> 이메일 저장  </label><input type="submit"></p>
         </form>
         `,
         `<a href="/topic/create">create</a>`,
         );
   } else{
-      var html = template.HTML(title, list,
-        `
-        <form action="/auth/login_process" method="post">
-            <p><input type="text" name="email" placeholder="email"></p>
-            <p><input type="password" name="password" placeholder="password"></p>
-            <p><label><input type="checkbox" name="email_cookie" value="true"> 이메일 저장</label><input type="submit"></p>
-        </form>
-        `,
-        `<a href="/topic/create">create</a>`,
-        );
+
+    var html = template.HTML(title, list,
+    `
+    <form action="/auth/login_process" method="post">
+        <p><input type="text" name="email" placeholder="email"></p>
+        <p><input type="password" name="password" placeholder="password"></p>
+        <p><label><input type="checkbox" name="email_cookie" value="true" checked> 이메일 저장  </label><input type="submit"></p>
+    </form>
+    `,
+    `<a href="/topic/create">create</a>`,
+    );
   }
 
   response.send(html)
 });
 
+/*
 router.post('/login_process', function (request,response) {
   var post = request.body;
 
@@ -62,10 +64,18 @@ router.post('/login_process', function (request,response) {
     }
 });
 
+
 router.get('/logout', function (request,response) {
   request.session.destroy(function (err) {
     response.redirect('/');  
   })
 });
+*/
 
+router.get('/logout', function (request,response) {
+  request.logout();
+  request.session.save(function (err) {
+    response.redirect('/');  
+  })
+});
   module.exports = router;
